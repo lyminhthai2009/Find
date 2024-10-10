@@ -27,26 +27,64 @@ def banner():
   sys.stdout.write(X)
   sys.stdout.flush() 
   sleep(0.00125)
-class Facebook_Api (object):
-	def __init__(self, cookie):
-		self.cookie = cookie
-		self.user_id = cookie.split('c_user=')[1].split(';')[0]
-		self.headers = {'authority': 'mbasic.facebook.com','cache-control': 'max-age=0','sec-ch-ua': '"Google Chrome";v="93", " Not;A Brand";v="99", "Chromium";v="93"','sec-ch-ua-mobile': '?0','sec-ch-ua-platform': '"Windows"','upgrade-insecure-requests': '1','origin': 'https://mbasic.facebook.com','content-type': 'application/x-www-form-urlencoded','user-agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36','accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9','sec-fetch-site': 'same-origin','sec-fetch-mode': 'navigate','sec-fetch-user': '?1','sec-fetch-dest': 'document','referer': 'https://mbasic.facebook.com/','accept-language': 'en-US,en;q=0.9','cookie': cookie}
-	
-	def get_thongtin(self):
-		try:
-		#if True:
-			#url = requests.get('https://mbasic.facebook.com/profile.php',headers=self.headers).url
-			home = requests.get('https://mbasic.facebook.com/profile.php',headers=self.headers).text
-			self.fb_dtsg = home.split('<input type="hidden" name="fb_dtsg" value="')[1].split('"')[0]
-			self.jazoest = home.split('<input type="hidden" name="jazoest" value="')[1].split('"')[0]
-			ten = home.split('<title>')[1].split('</title>')[0]
-			self.user_id = self.cookie.split('c_user=')[1].split(';')[0]
-			#print(f'{luc}Tên Facebook: {vang}{ten} {red}| {luc}ID: {vang}{self.user_id} ')
-			#print(f'{ten} | {self.user_id} ')
-			return ten, self.user_id
-		except:
-			return 0
+import requests
+
+class FacebookApi(object):
+    def __init__(self, access_token):
+        self.access_token = access_token
+        self.base_url = 'https://graph.facebook.com/v17.0/'
+        self.headers = {
+            'Authorization': f'Bearer {self.access_token}',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.82 Safari/537.36',
+            'Accept': 'application/json'
+        }
+
+    def get_user_info(self):
+        url = f'{self.base_url}me'
+        params = {
+            'fields': 'id,name,email',
+            'access_token': self.access_token
+        }
+
+        response = requests.get(url, headers=self.headers, params=params)
+        
+        if response.status_code == 200:
+            user_info = response.json()
+            return user_info
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            return None
+
+    def get_friends(self):
+        url = f'{self.base_url}me/friends'
+        params = {
+            'access_token': self.access_token
+        }
+
+        response = requests.get(url, headers=self.headers, params=params)
+
+        if response.status_code == 200:
+            friends_info = response.json()
+            return friends_info
+        else:
+            print(f"Error: {response.status_code} - {response.text}")
+            return None
+
+# Sử dụng lớp
+if __name__ == "__main__":
+    access_token = 'your_facebook_access_token'  # Thay bằng token hợp lệ
+    fb_api = FacebookApi(access_token)
+
+    user_info = fb_api.get_user_info()
+    if user_info:
+        print(f"Tên: {user_info.get('name', 'Không có tên')}, ID: {user_info.get('id', 'Không có ID')}, Email: {user_info.get('email', 'Không có email')}")
+
+    friends_info = fb_api.get_friends()
+    if friends_info:
+        print(f"Số bạn bè: {len(friends_info.get('data', []))}")
+        for friend in friends_info.get('data', []):
+            print(f"Bạn bè: {friend.get('name')} (ID: {friend.get('id')})")
+
 
 	
 	def follow(self, id):
